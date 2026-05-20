@@ -22,7 +22,7 @@ export default function Login({ onLogin }) {
   const streamRef = useRef(null)
 
   const API = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: import.meta.env.VITE_API_URL,
   })
 
   // =========================
