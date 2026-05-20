@@ -1,0 +1,91 @@
+# Documentation & Markdown Files
+*.md
+*.MD
+*.sh
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Backend - Python
+backend/utils/.env
+backend/utils/__pycache__/*.pyc
+backend/utils/.env/
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.Python
+backend/env/
+backend/ENV/
+backend/build/
+backend/develop-eggs/
+backend/dist/
+backend/downloads/
+backend/eggs/
+backend/.eggs/
+backend/lib/
+backend/lib64/
+backend/parts/
+backend/sdist/
+backend/var/
+backend/wheels/
+backend/*.egg-info/
+backend/.installed.cfg
+backend/*.egg
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.env
+backend/.env.local
+backend/database.db
+backend/temp/
+
+# Backend - OS & Temp
+backend/.DS_Store
+backend/Thumbs.db
+backend/*.tmp
+backend/*.log
+
+# Frontend - Node
+frontend/node_modules/
+frontend/package-lock.json
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.test
+frontend/.env.production
+
+# Frontend - IDE & Build
+frontend/.cache/
+frontend/.eslintcache
+frontend/.stylelintcache
+frontend/coverage/
+frontend/.nyc_output/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Frontend - OS & Temp
+frontend/.DS_Store
+frontend/Thumbs.db
+frontend/*.tmp
+frontend/*.log
+
+# Root level
+.env
+.env.local
+.env.*.local
+.cache/
+temp/
+logs/
+*.log
+.git/
