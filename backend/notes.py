@@ -1,8 +1,6 @@
 from flask import Blueprint,request,jsonify
-import sqlite3
 from utils.jwt_helper import token_required
-import os
-from utils.config import DATABASE_NAME
+from db import get_connection
 
 notes = Blueprint('notes',__name__)
 
@@ -13,9 +11,9 @@ def add_note(data):
     note = body["note"]
     user_id = data["user_id"]
 
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO notes (note,user_id) VALUES (?, ?)''',(note,user_id))
+    cursor.execute('''INSERT INTO notes (note,user_id) VALUES (%s, %s)''',(note,user_id))
 
     conn.commit()
     conn.close()
@@ -30,10 +28,10 @@ def add_note(data):
 @notes.route('/view_all',methods=["GET"])
 @token_required
 def view_notes(data):
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
     user_id = data["user_id"]
-    cursor.execute("SELECT id, note FROM notes WHERE user_id = ?",(user_id,))
+    cursor.execute("SELECT id, note FROM notes WHERE user_id = %s",(user_id,))
     results = cursor.fetchall()
     conn.close()
 
@@ -43,11 +41,11 @@ def view_notes(data):
 @notes.route('/view/<int:id>',methods=["GET"])
 @token_required
 def view(data, id):
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
     user_id = data["user_id"]
 
-    cursor.execute("SELECT note FROM notes WHERE id = ? AND user_id = ?",(id,user_id))
+    cursor.execute("SELECT note FROM notes WHERE id = %s AND user_id = %s",(id,user_id))
     results = cursor.fetchone()
     conn.close()
 
@@ -62,10 +60,10 @@ def update_note(data, id):
     new_note = body["note"]
     user_id = data["user_id"]
 
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("UPDATE notes SET note = ? WHERE id = ? AND user_id = ?",(new_note,id,user_id))
+    cursor.execute("UPDATE notes SET note = %s WHERE id = %s AND user_id = %s",(new_note,id,user_id))
 
     conn.commit()
     conn.close()
@@ -82,10 +80,10 @@ def update_note(data, id):
 @notes.route('/delete/<int:id>',methods=["DELETE"])
 @token_required
 def delete_note(data, id):
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM notes WHERE id = ? AND user_id = ?",(id,data["user_id"]))
+    cursor.execute("DELETE FROM notes WHERE id = %s AND user_id = %s",(id,data["user_id"]))
 
     conn.commit()
     conn.close()
@@ -98,11 +96,11 @@ def delete_note(data, id):
 @notes.route('/search/<string:q>',methods=["GET"])
 @token_required
 def search_note(data, q):
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
     user_id = data["user_id"]
     query = f"%{q}%"
-    cursor.execute("SELECT note FROM notes WHERE note LIKE ? AND user_id = ?",(query,user_id))
+    cursor.execute("SELECT note FROM notes WHERE note LIKE %s AND user_id = %s",(query,user_id))
 
     results = cursor.fetchall()
     conn.close()

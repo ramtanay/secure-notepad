@@ -16,5 +16,5 @@ def home():
     return "This is Home page."
 
 
-
-app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

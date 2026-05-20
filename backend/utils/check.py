@@ -1,4 +1,4 @@
-from backend.utils.face import create_face_embedding, verify_face
+from face import create_face_embedding, verify_face
 from flask import Flask, request, jsonify
 import os
 

@@ -88,8 +88,8 @@ export default function AdminDashboard({ user, token }) {
   )
 
   const filteredNotes = notes.filter(note =>
-    note[1].toLowerCase().includes(searchQuery.toLowerCase()) ||
-    note[2].toLowerCase().includes(searchQuery.toLowerCase())
+    String(note[1]).includes(searchQuery) ||
+    note[2]?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -264,7 +264,7 @@ export default function AdminDashboard({ user, token }) {
               {filteredNotes.map((note, idx) => (
                 <div key={idx} className="note-item">
                   <div className="note-header">
-                    <h4>{note[1]}</h4>
+                    <h4>User ID: {note[1]}</h4>
                     <span className="note-id">ID: {note[0]}</span>
                   </div>
                   <p className="note-content">{note[2]}</p>

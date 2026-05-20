@@ -1,47 +1,54 @@
 from flask import Blueprint, request, jsonify
-import sqlite3
 from flask_bcrypt import Bcrypt
 import datetime
 import jwt
-from utils.face import create_face_embedding,verify_face
 import numpy as np
-from utils.config import DATABASE_NAME, SECRET_KEY
+import os
+import psycopg2
+
+from utils.face import create_face_embedding, verify_face
+from utils.config import SECRET_KEY
+from db import get_connection
 
 
-
-auth = Blueprint('auth',__name__)
+auth = Blueprint('auth', __name__)
 
 bcrypt = Bcrypt()
+
+
+# =========================================
+# SIGNUP
+# =========================================
 
 @auth.route('/signup', methods=['POST'])
 def signup():
 
     username = request.form.get('username')
     password = request.form.get('password')
-
     image = request.files.get('image')
+
     if not username or not password:
-        return jsonify({'message': 'Username and password are required.'}), 400
+        return jsonify({
+            'message': 'Username and password are required.'
+        }), 400
+
     if not image:
-        return jsonify({'message': 'Image is required.'}), 400
+        return jsonify({
+            'message': 'Image is required.'
+        }), 400
+
     try:
 
-        import os
-
-        # create temp folder
         os.makedirs("temp", exist_ok=True)
 
-        # save uploaded image temporarily
         temp_path = f"temp/{image.filename}"
 
         image.save(temp_path)
 
-        # create embedding
         embedding_bytes = create_face_embedding(
             temp_path
         ).tobytes()
 
-        # remove temp image
         os.remove(temp_path)
 
     except Exception as e:
@@ -50,83 +57,159 @@ def signup():
             'message': 'Face processing failed.',
             'error': str(e)
         }), 400
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    conn = sqlite3.connect(DATABASE_NAME)
+    hashed_password = bcrypt.generate_password_hash(
+        password
+    ).decode('utf-8')
+
+    conn = get_connection()
     cursor = conn.cursor()
 
     try:
+
         cursor.execute(
-            "INSERT INTO users (username, password, face_embedding) VALUES (?, ?, ?)",
-            (username, hashed_password, embedding_bytes)
+            """
+            INSERT INTO users
+            (username, password, face_embedding)
+            VALUES (%s, %s, %s)
+            """,
+            (
+                username,
+                hashed_password,
+                embedding_bytes
+            )
         )
+
         conn.commit()
-    except sqlite3.IntegrityError:
+
+    except psycopg2.IntegrityError:
+
+        conn.rollback()
+
         conn.close()
+
         return jsonify({
             "message": "Username already exists."
         }), 400
+
     conn.close()
-    return jsonify({'message': 'User created successfully.'}),201
+
+    return jsonify({
+        'message': 'User created successfully.'
+    }), 201
 
 
-@auth.route('/login',methods=["POST"])
+# =========================================
+# PASSWORD LOGIN
+# =========================================
+
+@auth.route('/login', methods=["POST"])
 def login():
 
     username = request.form.get('username')
     password = request.form.get("password")
 
     if not username or not password:
-        return jsonify({'message': 'Username and password are required.'}), 400
-    
-    conn = sqlite3.connect(DATABASE_NAME)
+
+        return jsonify({
+            'message': 'Username and password are required.'
+        }), 400
+
+    conn = get_connection()
+
     cursor = conn.cursor()
-    cursor.execute("SELECT id, password FROM users WHERE username = ?",(username,))
+
+    cursor.execute(
+        """
+        SELECT id, password
+        FROM users
+        WHERE username = %s
+        """,
+        (username,)
+    )
+
     user = cursor.fetchone()
+
     conn.close()
-    
+
+    # Admin Login
+
     if username == "admin" and password == "admin123":
 
         token = jwt.encode({
-            'user_id':user[0] if user else None,
+
+            'user_id': user[0] if user else None,
             'username': username,
             'role': 'admin',
-            'exp': datetime.datetime.now(datetime.timezone.utc)
-                    + datetime.timedelta(hours=1)
+
+            'exp': datetime.datetime.now(
+                datetime.timezone.utc
+            ) + datetime.timedelta(hours=1)
+
         }, SECRET_KEY, algorithm='HS256')
 
         return jsonify({
-            'message':'Admin login successful',
+            'message': 'Admin login successful',
             'token': token
         }), 200
 
-    if user and bcrypt.check_password_hash(user[1], password):
+    # Normal User Login
+
+    if user and bcrypt.check_password_hash(
+        user[1],
+        password
+    ):
+
         token = jwt.encode({
-            'user_id': user[0] if user else None,
+
+            'user_id': user[0],
             'username': username,
             'role': 'user',
-            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+
+            'exp': datetime.datetime.now(
+                datetime.timezone.utc
+            ) + datetime.timedelta(hours=1)
+
         }, SECRET_KEY, algorithm='HS256')
-        return jsonify({'token': token})
+
+        return jsonify({
+            'message': 'Login successful',
+            'token': token
+        }), 200
+
     else:
-        return jsonify({'message': 'Invalid credentials.'}), 401
-    
+
+        return jsonify({
+            'message': 'Invalid credentials.'
+        }), 401
+
+
+# =========================================
+# FACE LOGIN
+# =========================================
 
 @auth.route('/face_login', methods=['POST'])
 def face_login():
+
     image = request.files.get('image')
     username = request.form.get('username')
 
     if not image or not username:
+
         return jsonify({
             'message': 'Image and username are required.'
         }), 400
 
-    conn = sqlite3.connect(DATABASE_NAME)
+    conn = get_connection()
+
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT face_embedding, id FROM users WHERE username = ?",
+        """
+        SELECT face_embedding, id
+        FROM users
+        WHERE username = %s
+        """,
         (username,)
     )
 
@@ -135,40 +218,33 @@ def face_login():
     conn.close()
 
     if not result:
+
         return jsonify({
             'message': 'User not found.'
         }), 404
 
     try:
 
-        import os
-
-        # create temp folder if not exists
         os.makedirs("temp", exist_ok=True)
 
-        # save uploaded image temporarily
         temp_path = f"temp/{image.filename}"
 
         image.save(temp_path)
 
-        # convert stored bytes back to numpy array
         stored_embedding = np.frombuffer(
             result[0],
             dtype=np.float64
         )
 
-        # create embedding from uploaded image
         input_embedding = create_face_embedding(
             temp_path
         )
 
-        # compare embeddings
         is_match, similarity = verify_face(
             input_embedding,
             stored_embedding
         )
 
-        # remove temp image
         os.remove(temp_path)
 
     except Exception as e:
@@ -203,6 +279,14 @@ def face_login():
         'token': token
     }), 200
 
-@auth.route('/logout',methods=['POST'])
+
+# =========================================
+# LOGOUT
+# =========================================
+
+@auth.route('/logout', methods=['POST'])
 def logout():
-    return jsonify({'message': 'Logout successful.'}), 200
+
+    return jsonify({
+        'message': 'Logout successful.'
+    }), 200
