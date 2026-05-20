@@ -5,7 +5,7 @@ from admin import admin
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app) # This will allow requests from any origin. In production, you should specify the allowed origins for better security.
+CORS(app, origins=['https://secure-notepad-pearl.vercel.app']) # This will allow requests from any origin. In production, you should specify the allowed origins for better security.
 app.register_blueprint(auth, url_prefix='/auth')  # gets all the api routes from auth.py and adds /auth before it. So /signup becomes /auth/signup
 app.register_blueprint(notes,url_prefix='/note')
 app.register_blueprint(admin,url_prefix='/admin')
