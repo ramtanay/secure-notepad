@@ -147,47 +147,51 @@ export default function Login({ onLogin }) {
   // SIGNUP
   // =========================
 
-  const handleSignup = async (e) => {
-    e.preventDefault()
+const handleSignup = async (e) => {
+  e.preventDefault()
 
-    setError("")
-    setMessage("")
-    setLoading(true)
+  setError("")
+  setMessage("")
+  setLoading(true)
 
-    if (!username || !password || !image) {
-      setError("All fields are required")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const formData = new FormData()
-
-      formData.append("username", username)
-      formData.append("password", password)
-      formData.append("image", image)
-
-      await API.post("/auth/signup", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-
-      setMessage("Signup successful! Please login.")
-
-      setTimeout(() => {
-        setMode("login")
-        setUsername("")
-        setPassword("")
-        setImage(null)
-        setImagePreview(null)
-      }, 2000)
-    } catch (err) {
-      setError(err.response?.data?.message || "Signup failed")
-    } finally {
-      setLoading(false)
-    }
+  if (!username || !password || !image) {
+    setError("All fields are required")
+    setLoading(false)
+    return
   }
+
+  try {
+    const formData = new FormData()
+
+    formData.append("username", username)
+    formData.append("password", password)
+    formData.append("image", image)
+
+    await API.post("/auth/signup", formData)
+
+    setMessage("Signup successful! Please login.")
+
+    setTimeout(() => {
+      setMode("login")
+      setUsername("")
+      setPassword("")
+      setImage(null)
+      setImagePreview(null)
+    }, 2000)
+
+  } catch (err) {
+
+    console.error(err)
+
+    setError(
+      err.response?.data?.message ||
+      "Signup failed"
+    )
+
+  } finally {
+    setLoading(false)
+  }
+}
 
   // =========================
   // NORMAL LOGIN
@@ -229,48 +233,48 @@ export default function Login({ onLogin }) {
   // FACE LOGIN
   // =========================
 
-  const handleFaceLogin = async (e) => {
-    e.preventDefault()
+const handleFaceLogin = async (e) => {
+  e.preventDefault()
 
-    setError("")
-    setLoading(true)
+  setError("")
+  setLoading(true)
 
-    if (!username || !image) {
-      setError("Username and image are required")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const formData = new FormData()
-
-      formData.append("username", username)
-      formData.append("image", image)
-
-      const response = await API.post(
-        "/auth/face_login",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      )
-
-      const token = response.data.token
-
-      localStorage.setItem("token", token)
-
-      onLogin(token)
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Face login failed"
-      )
-    } finally {
-      setLoading(false)
-    }
+  if (!username || !image) {
+    setError("Username and image are required")
+    setLoading(false)
+    return
   }
+
+  try {
+    const formData = new FormData()
+
+    formData.append("username", username)
+    formData.append("image", image)
+
+    const response = await API.post(
+      "/auth/face_login",
+      formData
+    )
+
+    const token = response.data.token
+
+    localStorage.setItem("token", token)
+
+    onLogin(token)
+
+  } catch (err) {
+
+    console.error(err)
+
+    setError(
+      err.response?.data?.message ||
+      "Face login failed"
+    )
+
+  } finally {
+    setLoading(false)
+  }
+}
 
   // =========================
   // REUSABLE IMAGE SECTION
