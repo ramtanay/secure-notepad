@@ -242,20 +242,20 @@ def face_login():
             dtype=np.float64
         )
 
-        print("STEP 3")
+        print("STEP 3", flush=True)
 
         input_embedding = create_face_embedding(
             temp_path
         )
 
-        print("STEP 4")
+        print("STEP 4", flush=True)
 
         is_match, similarity = verify_face(
             input_embedding,
             stored_embedding
         )
 
-        print("STEP 5")
+        print("STEP 5", flush=True)
 
         os.remove(temp_path)
 
