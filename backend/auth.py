@@ -196,11 +196,91 @@ def face_login():
     image = request.files.get('image')
     username = request.form.get('username')
 
-    return jsonify({
-        "message": "Face route works",
+    if not image or not username:
+
+        return jsonify({
+            'message': 'Image and username are required.'
+        }), 400
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT face_embedding, id
+        FROM users
+        WHERE username = %s
+        """,
+        (username,)
+    )
+
+    result = cursor.fetchone()
+
+    conn.close()
+
+    if not result:
+
+        return jsonify({
+            'message': 'User not found.'
+        }), 404
+
+    try:
+
+        os.makedirs("temp", exist_ok=True)
+
+        temp_path = f"temp/{image.filename}"
+
+        image.save(temp_path)
+
+        stored_embedding = np.frombuffer(
+            result[0],
+            dtype=np.float64
+        )
+
+        input_embedding = create_face_embedding(
+            temp_path
+        )
+
+        is_match, similarity = verify_face(
+            input_embedding,
+            stored_embedding
+        )
+
+        os.remove(temp_path)
+
+    except Exception as e:
+
+        return jsonify({
+            'message': 'Face processing failed.',
+            'error': str(e)
+        }), 400
+
+    if not is_match:
+
+        return jsonify({
+            'message': 'Face verification failed.',
+            'similarity': float(similarity)
+        }), 401
+
+    token = jwt.encode({
+
+        "user_id": result[1],
         "username": username,
-        "image_received": image is not None
+        "role": "user",
+
+        "exp": datetime.datetime.now(
+            datetime.timezone.utc
+        ) + datetime.timedelta(hours=1)
+
+    }, SECRET_KEY, algorithm='HS256')
+
+    return jsonify({
+        'message': 'Face login successful.',
+        'similarity': float(similarity),
+        'token': token
     }), 200
+
 
 # =========================================
 # LOGOUT
