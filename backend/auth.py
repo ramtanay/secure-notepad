@@ -227,30 +227,41 @@ def face_login():
 
     try:
 
+        print("STEP 1")
+
         os.makedirs("temp", exist_ok=True)
 
-        temp_path = f"temp/{image.filename}"
+        temp_path = "temp/temp_image.jpg"
 
         image.save(temp_path)
+
+        print("STEP 2")
 
         stored_embedding = np.frombuffer(
             result[0],
             dtype=np.float64
         )
 
+        print("STEP 3")
+
         input_embedding = create_face_embedding(
             temp_path
         )
+
+        print("STEP 4")
 
         is_match, similarity = verify_face(
             input_embedding,
             stored_embedding
         )
 
+        print("STEP 5")
+
         os.remove(temp_path)
 
     except Exception as e:
 
+        print("ERROR:", str(e))
         return jsonify({
             'message': 'Face processing failed.',
             'error': str(e)
