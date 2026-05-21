@@ -16,9 +16,9 @@ def create_face_embedding(image_path):
 
     embeddings = DeepFace.represent(
     img_path=image_path,
-    model_name='ArcFace',
-    detector_backend='retinaface',
-    enforce_detection=True
+    model_name='Facenet',
+    detector_backend='opencv',
+    enforce_detection=False
 )
 
     face_embedding = np.array(embeddings[0]['embedding'])

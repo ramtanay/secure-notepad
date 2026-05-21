@@ -5,6 +5,7 @@ import jwt
 import numpy as np
 import os
 import psycopg2
+import cv2
 
 from utils.face import create_face_embedding, verify_face
 from utils.config import SECRET_KEY
@@ -244,6 +245,11 @@ def face_login():
 
         print("STEP 3", flush=True)
 
+        img = cv2.imread(temp_path)
+
+        img = cv2.resize(img, (300, 300))
+        cv2.imwrite(temp_path, img)
+
         input_embedding = create_face_embedding(
             temp_path
         )
@@ -261,7 +267,7 @@ def face_login():
 
     except Exception as e:
 
-        print("ERROR:", str(e))
+        print("ERROR:", str(e), flush=True)
         return jsonify({
             'message': 'Face processing failed.',
             'error': str(e)
