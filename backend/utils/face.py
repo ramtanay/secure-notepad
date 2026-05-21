@@ -7,8 +7,9 @@ import os
 # Suppress TensorFlow warnings in production
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# Define constants
-FACE_MODEL_NAME = 'Facenet'  # Using Facenet for 128-dim embeddings
+# IMPORTANT: Use 'Facenet' (128-dim) instead of 'Facenet512' for free tier
+# 'Facenet' uses ~200MB less RAM and is faster
+FACE_MODEL_NAME = 'SFace'  # Changed from 'Facenet512'
 
 def preprocess_image(image):
     img = Image.open(image).convert('RGB')
@@ -19,13 +20,13 @@ def preprocess_image(image):
 def create_face_embedding(image_path):
     """
     Create face embedding using DeepFace with consistent model
-    Returns 512-dim embedding for Facenet512
+    Returns 128-dim embedding for Facenet (lighter than Facenet512)
     """
     try:
         embeddings = DeepFace.represent(
             img_path=image_path,
             model_name=FACE_MODEL_NAME,
-            detector_backend='opencv',
+            detector_backend='opencv',  # Changed from 'retinaface' (lighter)
             enforce_detection=False
         )
         

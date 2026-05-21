@@ -54,10 +54,22 @@ export default function Login({ onLogin }) {
   }
 
   // =========================
-  // SWITCH MODE WITH CLEANUP
+  // SWITCH MODE WITH CLEANUP (FIXED)
   // =========================
 
   const switchMode = (newMode) => {
+    // Stop camera first
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    
+    // Clear image preview blob URL to prevent memory leaks
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    
+    // Reset all states
     setMode(newMode)
     setError("")
     setMessage("")
@@ -67,11 +79,7 @@ export default function Login({ onLogin }) {
     setImagePreview(null)
     setCameraActive(false)
     setCameraError("")
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop())
-      streamRef.current = null
-    }
+    setLoading(false)
   }
 
   // =========================
@@ -190,7 +198,7 @@ export default function Login({ onLogin }) {
   }, [imagePreview])
 
   // =========================
-  // SIGNUP
+  // SIGNUP (FIXED - No freezing)
   // =========================
 
   const handleSignup = async (e) => {
@@ -220,7 +228,7 @@ export default function Login({ onLogin }) {
 
     try {
       const formData = new FormData()
-      formData.append("username", username)
+      formData.append("username", username.trim())
       formData.append("password", password)
       formData.append("image", image)
 
@@ -230,10 +238,34 @@ export default function Login({ onLogin }) {
         }
       })
 
-      setMessage("Signup successful! Please login.")
+      // Stop camera if active
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+      }
+      setCameraActive(false)
       
+      // Clear image preview blob
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview)
+      }
+      
+      setMessage("Signup successful! Please login.")
+      setImage(null)
+      setImagePreview(null)
+      setLoading(false)
+      
+      // Switch to login mode after delay
       setTimeout(() => {
-        switchMode("login")
+        setMode("login")
+        setUsername("")
+        setPassword("")
+        setImage(null)
+        setImagePreview(null)
+        setError("")
+        setMessage("")
+        setCameraActive(false)
+        setCameraError("")
       }, 2000)
 
     } catch (err) {
@@ -249,7 +281,6 @@ export default function Login({ onLogin }) {
       }
       
       setError(errorMessage)
-    } finally {
       setLoading(false)
     }
   }
