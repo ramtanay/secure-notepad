@@ -12,6 +12,9 @@ pip install --upgrade pip
 echo "📦 Installing numpy..."
 pip install numpy==1.23.5
 
+echo "📦 Installing pandas (required by deepface)..."
+pip install pandas==2.0.3
+
 echo "📦 Installing tensorflow 2.10.0 (lightweight version)..."
 pip install tensorflow==2.10.0
 
@@ -20,6 +23,17 @@ pip install opencv-python-headless==4.7.0.72
 
 echo "📦 Installing deepface..."
 pip install --no-deps deepface==0.0.75
+
+# Install deepface dependencies manually
+echo "📦 Installing deepface dependencies..."
+pip install \
+    gdown==4.7.1 \
+    tqdm==4.65.0 \
+    fire==0.5.0 \
+    mtcnn==0.1.1 \
+    retina-face==0.0.17 \
+    beautifulsoup4==4.12.2 \
+    requests==2.31.0
 
 echo "📦 Installing Flask and web frameworks..."
 pip install Flask==2.3.3 Flask-Bcrypt==1.0.1 flask-cors==4.0.0
