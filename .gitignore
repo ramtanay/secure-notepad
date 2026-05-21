@@ -6,7 +6,7 @@ env/
 ENV/
 .venv/
 *.md
-*.sh
+BUILD_REPORT.sh
 
 # Build output
 dist/
