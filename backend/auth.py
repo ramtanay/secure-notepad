@@ -5,13 +5,12 @@ import jwt
 import numpy as np
 import os
 import psycopg2
-import cv2
 
 from utils.face import create_face_embedding, verify_face
-from utils.config import SECRET_KEY
+from utils.config import SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
 from db import get_connection
-admin_username = os.getenv("ADMIN_USERNAME")
-admin_password = os.getenv("ADMIN_PASSWORD")
+admin_username = ADMIN_USERNAME
+admin_password = ADMIN_PASSWORD
 
 
 auth = Blueprint('auth', __name__)
@@ -134,27 +133,20 @@ def login():
     user = cursor.fetchone()
 
     conn.close()
-
-    # Admin Login
-
+    # Special admin login (no database record needed)
     if username == admin_username and password == admin_password:
-
         token = jwt.encode({
-
-            'user_id': user[0] if user else None,
+            'user_id': 0,  # Special admin ID
             'username': username,
             'role': 'admin',
-
-            'exp': datetime.datetime.now(
-                datetime.timezone.utc
-            ) + datetime.timedelta(hours=1)
-
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
         }, SECRET_KEY, algorithm='HS256')
-
+        
         return jsonify({
             'message': 'Admin login successful',
             'token': token
         }), 200
+
 
     # Normal User Login
 
@@ -244,11 +236,6 @@ def face_login():
         )
 
         print("STEP 3", flush=True)
-
-        img = cv2.imread(temp_path)
-
-        img = cv2.resize(img, (300, 300))
-        cv2.imwrite(temp_path, img)
 
         input_embedding = create_face_embedding(
             temp_path

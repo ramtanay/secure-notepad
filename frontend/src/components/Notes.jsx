@@ -12,6 +12,7 @@ export default function Notes({ token }) {
   const [error, setError] = useState("")
   const [editingId, setEditingId] = useState(null)
   const [editingText, setEditingText] = useState("")
+  const [editingTitle, setEditingTitle] = useState("")
   const [filterType, setFilterType] = useState("all")
   const [toast, setToast] = useState(null)
 
@@ -52,7 +53,7 @@ export default function Notes({ token }) {
     try {
       await API.post(
         "/note/add",
-        { note: newNote, title: newTitle || "Untitled" },
+        { note: newNote, title: newTitle.trim() || "Untitled" },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       setNewNote("")
@@ -77,11 +78,12 @@ export default function Notes({ token }) {
     try {
       await API.put(
         `/note/update/${id}`,
-        { note: editingText },
+        { note: editingText, title: editingTitle },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       setEditingId(null)
       setEditingText("")
+      setEditingTitle("")
       setToast({ message: "Note updated successfully", type: "success" })
       fetchNotes()
     } catch (err) {
@@ -121,8 +123,7 @@ export default function Notes({ token }) {
       const response = await API.get(`/note/search/${searchQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      const notesData = Array.isArray(response.data) ? response.data : []
-      setNotes(notesData)
+      setNotes(response.data || [])
     } catch (err) {
       console.error(err)
       setToast({ message: "Search failed", type: "error" })
@@ -131,22 +132,18 @@ export default function Notes({ token }) {
     }
   }
 
-  const startEdit = (id, text) => {
+  const startEdit = (id, title, text) => {
     setEditingId(id)
+    setEditingTitle(title)
     setEditingText(text)
   }
 
-  const displayNotes = Array.isArray(notes)
-  ? notes.filter((note) => {
-      if (filterType === "long")
-        return note[1]?.length > 50
-
-      if (filterType === "short")
-        return note[1]?.length <= 50
-
-      return true
-    })
-    : []
+  // Filter notes based on content length
+  const displayNotes = notes.filter((note) => {
+    if (filterType === "long") return note.note?.length > 100
+    if (filterType === "short") return note.note?.length <= 100
+    return true
+  })
 
   return (
     <div className="notes-container">
@@ -159,7 +156,7 @@ export default function Notes({ token }) {
         <div className="search-section">
           <input
             type="text"
-            placeholder="Search your notes..."
+            placeholder="Search notes by title or content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && searchNotes()}
@@ -190,13 +187,13 @@ export default function Notes({ token }) {
             className={`filter-btn ${filterType === "long" ? "active" : ""}`}
             onClick={() => setFilterType("long")}
           >
-            Long
+            Long Notes
           </button>
           <button
             className={`filter-btn ${filterType === "short" ? "active" : ""}`}
             onClick={() => setFilterType("short")}
           >
-            Short
+            Short Notes
           </button>
         </div>
       </div>
@@ -230,18 +227,26 @@ export default function Notes({ token }) {
           </div>
         ) : (
           displayNotes.map((note) => (
-            <div key={note[0]} className="note-card">
-              {editingId === note[0] ? (
+            <div key={note.id} className="note-card">
+              {editingId === note.id ? (
                 <>
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    className="note-edit-title"
+                    placeholder="Note title"
+                  />
                   <textarea
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     className="note-edit-textarea"
+                    rows={4}
                   />
                   <div className="note-actions">
                     <button
                       className="btn-save"
-                      onClick={() => updateNote(note[0])}
+                      onClick={() => updateNote(note.id)}
                       disabled={loading}
                     >
                       💾 Save
@@ -257,21 +262,23 @@ export default function Notes({ token }) {
                 </>
               ) : (
                 <>
-                  <p className="note-text">{note[1]}</p>
+                  <h3 className="note-title">{note.title || "Untitled"}</h3>
+                  <p className="note-text">{note.note}</p>
                   <div className="note-meta">
-                    <small>ID: {note[0]}</small>
+                    <small>ID: {note.id}</small>
+                    <small>• {note.note?.length || 0} characters</small>
                   </div>
                   <div className="note-actions">
                     <button
                       className="btn-edit"
-                      onClick={() => startEdit(note[0], note[1])}
+                      onClick={() => startEdit(note.id, note.title, note.note)}
                       disabled={loading}
                     >
                       ✏️ Edit
                     </button>
                     <button
                       className="btn-delete"
-                      onClick={() => deleteNote(note[0])}
+                      onClick={() => deleteNote(note.id)}
                       disabled={loading}
                     >
                       🗑️ Delete

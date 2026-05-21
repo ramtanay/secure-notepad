@@ -25,6 +25,56 @@ export default function Login({ onLogin }) {
     baseURL: import.meta.env.VITE_API_URL,
   })
 
+  // Add request/response interceptors for debugging
+  API.interceptors.request.use(request => {
+    console.log("📤 Request:", {
+      url: request.url,
+      method: request.method,
+      data: request.data instanceof FormData ? "FormData" : request.data,
+      headers: request.headers
+    })
+    return request
+  })
+
+  API.interceptors.response.use(
+    response => {
+      console.log("📥 Response:", {
+        status: response.status,
+        data: response.data
+      })
+      return response
+    },
+    error => {
+      console.error("❌ Response Error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      })
+      return Promise.reject(error)
+    }
+  )
+
+  // =========================
+  // SWITCH MODE WITH CLEANUP
+  // =========================
+
+  const switchMode = (newMode) => {
+    setMode(newMode)
+    setError("")
+    setMessage("")
+    setUsername("")
+    setPassword("")
+    setImage(null)
+    setImagePreview(null)
+    setCameraActive(false)
+    setCameraError("")
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+  }
+
   // =========================
   // START CAMERA
   // =========================
@@ -34,23 +84,21 @@ export default function Login({ onLogin }) {
       setCameraError("")
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: { width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       })
 
       streamRef.current = stream
-
       setCameraActive(true)
 
-      // Wait for video element render
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream
+          videoRef.current.play().catch(err => console.error("Video play error:", err))
         }
       }, 100)
     } catch (err) {
       console.error(err)
-
       setCameraError(
         "Unable to access webcam. Please allow camera permission."
       )
@@ -64,10 +112,8 @@ export default function Login({ onLogin }) {
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop())
-
       streamRef.current = null
     }
-
     setCameraActive(false)
   }
 
@@ -85,22 +131,19 @@ export default function Login({ onLogin }) {
     canvas.height = video.videoHeight
 
     const context = canvas.getContext("2d")
-
-    context.drawImage(video, 0, 0)
+    context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
     canvas.toBlob(
       (blob) => {
-        const file = new File([blob], "webcam-photo.jpg", {
-          type: "image/jpeg",
-        })
-
-        setImage(file)
-
-        setImagePreview(canvas.toDataURL())
-
-        stopCamera()
-
-        setMessage("Photo captured successfully!")
+        if (blob) {
+          const file = new File([blob], "webcam-photo.jpg", {
+            type: "image/jpeg",
+          })
+          setImage(file)
+          setImagePreview(URL.createObjectURL(blob))
+          stopCamera()
+          setMessage("Photo captured successfully!")
+        }
       },
       "image/jpeg",
       0.95
@@ -115,83 +158,123 @@ export default function Login({ onLogin }) {
     const file = e.target.files[0]
 
     if (file) {
-      setImage(file)
-
-      const reader = new FileReader()
-
-      reader.onloadend = () => {
-        setImagePreview(reader.result)
+      if (!file.type.startsWith('image/')) {
+        setError("Please upload an image file")
+        return
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size should be less than 5MB")
+        return
       }
 
-      reader.readAsDataURL(file)
+      console.log("📷 Image selected:", {
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / 1024).toFixed(2)} KB`
+      })
 
+      setImage(file)
+      setImagePreview(URL.createObjectURL(file))
       setMessage("")
+      setError("")
     }
   }
 
   // =========================
-  // CLEANUP CAMERA
+  // CLEANUP CAMERA AND PREVIEWS
   // =========================
 
   useEffect(() => {
     return () => {
       if (streamRef.current) {
-        streamRef.current
-          .getTracks()
-          .forEach((track) => track.stop())
+        streamRef.current.getTracks().forEach((track) => track.stop())
+      }
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview)
       }
     }
-  }, [])
+  }, [imagePreview])
 
   // =========================
   // SIGNUP
   // =========================
 
-const handleSignup = async (e) => {
-  e.preventDefault()
+  const handleSignup = async (e) => {
+    e.preventDefault()
 
-  setError("")
-  setMessage("")
-  setLoading(true)
+    setError("")
+    setMessage("")
+    setLoading(true)
 
-  if (!username || !password || !image) {
-    setError("All fields are required")
-    setLoading(false)
-    return
+    console.log("🔐 Starting signup process...")
+
+    if (!username || !password || !image) {
+      console.log("❌ Missing fields:", { username: !!username, password: !!password, image: !!image })
+      setError("All fields are required")
+      setLoading(false)
+      return
+    }
+
+    if (username.length < 3) {
+      setError("Username must be at least 3 characters")
+      setLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("username", username)
+      formData.append("password", password)
+      formData.append("image", image)
+
+      console.log("📤 Sending signup request to:", `${API.defaults.baseURL}/auth/signup`)
+      console.log("📦 FormData contents:")
+      for (let [key, value] of formData.entries()) {
+        if (key === 'image') {
+          console.log(`  ${key}: ${value.name} (${value.type}, ${value.size} bytes)`)
+        } else {
+          console.log(`  ${key}: ${value}`)
+        }
+      }
+
+      const response = await API.post("/auth/signup", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      })
+
+      console.log("✅ Signup successful:", response.data)
+
+      setMessage("Signup successful! Please login.")
+      
+      setTimeout(() => {
+        switchMode("login")
+      }, 2000)
+
+    } catch (err) {
+      console.error("❌ Signup error:", err)
+      
+      let errorMessage = "Signup failed"
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
-
-  try {
-    const formData = new FormData()
-
-    formData.append("username", username)
-    formData.append("password", password)
-    formData.append("image", image)
-
-    await API.post("/auth/signup", formData)
-
-    setMessage("Signup successful! Please login.")
-
-    setTimeout(() => {
-      setMode("login")
-      setUsername("")
-      setPassword("")
-      setImage(null)
-      setImagePreview(null)
-    }, 2000)
-
-  } catch (err) {
-
-    console.error(err)
-
-    setError(
-      err.response?.data?.message ||
-      "Signup failed"
-    )
-
-  } finally {
-    setLoading(false)
-  }
-}
 
   // =========================
   // NORMAL LOGIN
@@ -201,7 +284,10 @@ const handleSignup = async (e) => {
     e.preventDefault()
 
     setError("")
+    setMessage("")
     setLoading(true)
+
+    console.log("🔐 Starting login process...")
 
     if (!username || !password) {
       setError("Username and password are required")
@@ -211,18 +297,21 @@ const handleSignup = async (e) => {
 
     try {
       const formData = new FormData()
-
       formData.append("username", username)
       formData.append("password", password)
 
-      const response = await API.post("/auth/login", formData)
+      console.log("📤 Sending login request for user:", username)
 
+      const response = await API.post("/auth/login", formData)
       const token = response.data.token
 
-      localStorage.setItem("token", token)
+      console.log("✅ Login successful")
 
+      localStorage.setItem("token", token)
       onLogin(token)
+      
     } catch (err) {
+      console.error("❌ Login error:", err)
       setError(err.response?.data?.message || "Login failed")
     } finally {
       setLoading(false)
@@ -233,48 +322,50 @@ const handleSignup = async (e) => {
   // FACE LOGIN
   // =========================
 
-const handleFaceLogin = async (e) => {
-  e.preventDefault()
+  const handleFaceLogin = async (e) => {
+    e.preventDefault()
 
-  setError("")
-  setLoading(true)
+    setError("")
+    setMessage("")
+    setLoading(true)
 
-  if (!username || !image) {
-    setError("Username and image are required")
-    setLoading(false)
-    return
+    console.log("😊 Starting face login process...")
+
+    if (!username || !image) {
+      setError("Username and image are required")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("username", username)
+      formData.append("image", image)
+
+      console.log("📤 Sending face login request for user:", username)
+
+      const response = await API.post("/auth/face_login", formData)
+      const token = response.data.token
+
+      console.log("✅ Face login successful")
+
+      localStorage.setItem("token", token)
+      onLogin(token)
+
+    } catch (err) {
+      console.error("❌ Face login error:", err)
+      
+      if (err.response?.status === 404) {
+        setError("User not found. Please sign up first.")
+      } else if (err.response?.status === 401) {
+        setError("Face verification failed. Please try again with better lighting.")
+      } else {
+        setError(err.response?.data?.message || "Face login failed. Make sure your face is clearly visible.")
+      }
+    } finally {
+      setLoading(false)
+    }
   }
-
-  try {
-    const formData = new FormData()
-
-    formData.append("username", username)
-    formData.append("image", image)
-
-    const response = await API.post(
-      "/auth/face_login",
-      formData
-    )
-
-    const token = response.data.token
-
-    localStorage.setItem("token", token)
-
-    onLogin(token)
-
-  } catch (err) {
-
-    console.error(err)
-
-    setError(
-      err.response?.data?.message ||
-      "Face login failed"
-    )
-
-  } finally {
-    setLoading(false)
-  }
-}
 
   // =========================
   // REUSABLE IMAGE SECTION
@@ -293,6 +384,7 @@ const handleFaceLogin = async (e) => {
               onChange={handleImageChange}
               disabled={loading}
               id={inputId}
+              style={{ display: "none" }}
             />
 
             <label
@@ -307,6 +399,7 @@ const handleFaceLogin = async (e) => {
             type="button"
             className="btn btn-secondary webcam-btn"
             onClick={startCamera}
+            disabled={loading}
           >
             🎥 Use Webcam
           </button>
@@ -326,6 +419,7 @@ const handleFaceLogin = async (e) => {
               type="button"
               className="btn btn-primary"
               onClick={capturePhoto}
+              disabled={loading}
             >
               📸 Capture
             </button>
@@ -334,6 +428,7 @@ const handleFaceLogin = async (e) => {
               type="button"
               className="btn btn-secondary"
               onClick={stopCamera}
+              disabled={loading}
             >
               ❌ Cancel
             </button>
@@ -353,14 +448,29 @@ const handleFaceLogin = async (e) => {
       )}
 
       {imagePreview && (
-        <img
-          src={imagePreview}
-          alt="Preview"
-          className="image-preview"
-        />
+        <div className="image-preview-container">
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="image-preview"
+          />
+          <button
+            type="button"
+            className="remove-image-btn"
+            onClick={() => {
+              setImage(null)
+              setImagePreview(null)
+            }}
+          >
+            ✕ Remove
+          </button>
+        </div>
       )}
     </div>
   )
+
+  // Display current API URL for debugging
+  console.log("🌐 API Base URL:", API.defaults.baseURL)
 
   return (
     <div className="login-container">
@@ -371,32 +481,34 @@ const handleFaceLogin = async (e) => {
           Smart Notes with Face Recognition
         </p>
 
+        {/* Debug info - remove in production */}
+        {import.meta.env.DEV && (
+          <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px" }}>
+            API: {API.defaults.baseURL}
+          </div>
+        )}
+
         <div className="mode-switcher">
           <button
-            className={`mode-btn ${
-              mode === "login" ? "active" : ""
-            }`}
-            onClick={() => setMode("login")}
+            className={`mode-btn ${mode === "login" ? "active" : ""}`}
+            onClick={() => switchMode("login")}
+            disabled={loading}
           >
             Login
           </button>
 
           <button
-            className={`mode-btn ${
-              mode === "signup" ? "active" : ""
-            }`}
-            onClick={() => setMode("signup")}
+            className={`mode-btn ${mode === "signup" ? "active" : ""}`}
+            onClick={() => switchMode("signup")}
+            disabled={loading}
           >
             Signup
           </button>
 
           <button
-            className={`mode-btn ${
-              mode === "face-login"
-                ? "active"
-                : ""
-            }`}
-            onClick={() => setMode("face-login")}
+            className={`mode-btn ${mode === "face-login" ? "active" : ""}`}
+            onClick={() => switchMode("face-login")}
+            disabled={loading}
           >
             Face Login
           </button>
@@ -415,32 +527,29 @@ const handleFaceLogin = async (e) => {
         )}
 
         {/* LOGIN */}
-
         {mode === "login" && (
           <form onSubmit={handleLogin}>
             <div className="form-group">
               <label>Username</label>
-
               <input
                 type="text"
                 placeholder="Enter username"
                 value={username}
-                onChange={(e) =>
-                  setUsername(e.target.value)
-                }
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+                autoComplete="username"
               />
             </div>
 
             <div className="form-group">
               <label>Password</label>
-
               <input
                 type="password"
                 placeholder="Enter password"
                 value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                autoComplete="current-password"
               />
             </div>
 
@@ -449,40 +558,35 @@ const handleFaceLogin = async (e) => {
               className="btn btn-primary"
               disabled={loading}
             >
-              {loading
-                ? "Logging in..."
-                : "Login"}
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
         )}
 
         {/* SIGNUP */}
-
         {mode === "signup" && (
           <form onSubmit={handleSignup}>
             <div className="form-group">
               <label>Username</label>
-
               <input
                 type="text"
-                placeholder="Choose username"
+                placeholder="Choose username (min 3 characters)"
                 value={username}
-                onChange={(e) =>
-                  setUsername(e.target.value)
-                }
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+                autoComplete="username"
               />
             </div>
 
             <div className="form-group">
               <label>Password</label>
-
               <input
                 type="password"
-                placeholder="Choose password"
+                placeholder="Choose password (min 6 characters)"
                 value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                autoComplete="new-password"
               />
             </div>
 
@@ -493,27 +597,23 @@ const handleFaceLogin = async (e) => {
               className="btn btn-primary"
               disabled={loading}
             >
-              {loading
-                ? "Creating account..."
-                : "Sign Up"}
+              {loading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
         )}
 
         {/* FACE LOGIN */}
-
         {mode === "face-login" && (
           <form onSubmit={handleFaceLogin}>
             <div className="form-group">
               <label>Username</label>
-
               <input
                 type="text"
                 placeholder="Enter username"
                 value={username}
-                onChange={(e) =>
-                  setUsername(e.target.value)
-                }
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+                autoComplete="username"
               />
             </div>
 
@@ -524,9 +624,7 @@ const handleFaceLogin = async (e) => {
               className="btn btn-primary"
               disabled={loading}
             >
-              {loading
-                ? "Verifying face..."
-                : "Login With Face"}
+              {loading ? "Verifying face..." : "Login With Face"}
             </button>
           </form>
         )}
