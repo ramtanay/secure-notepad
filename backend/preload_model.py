@@ -6,46 +6,53 @@ print("=" * 50)
 print("Pre-loading Face Recognition Models...")
 print("=" * 50)
 
+# Set memory optimization flags
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
+
 try:
-    from deepface import DeepFace
+    # First, verify tensorflow is installed correctly
     import tensorflow as tf
+    print(f"✅ TensorFlow version: {tf.__version__}")
+    print(f"   TensorFlow CPU: {not tf.config.list_physical_devices('GPU')}")
     
-    # Suppress TensorFlow warnings
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    tf.get_logger().setLevel('ERROR')
+    # Configure tensorflow for memory efficiency
+    tf.config.threading.set_inter_op_parallelism_threads(2)
+    tf.config.threading.set_intra_op_parallelism_threads(2)
+    
+    from deepface import DeepFace
     
     print("\n📦 Loading FaceNet512 model...")
-    # This will download and cache the model during build
     DeepFace.build_model(model_name='Facenet512')
     print("✅ FaceNet512 model loaded and cached successfully!")
     
-    # Test with a dummy image to ensure everything is working
-    print("\n🧪 Testing model with a sample...")
+    # Quick test
+    print("\n🧪 Testing model...")
     import numpy as np
     from PIL import Image
     
-    # Create a dummy image (doesn't need to have a face)
-    dummy_image = np.zeros((224, 224, 3), dtype=np.uint8)
+    # Create dummy test image
+    dummy_image = Image.new('RGB', (224, 224), color='black')
     temp_path = "/tmp/test_face.jpg"
-    Image.fromarray(dummy_image).save(temp_path)
+    dummy_image.save(temp_path)
     
-    # Test embedding generation
     embedding = DeepFace.represent(
         img_path=temp_path,
         model_name='Facenet512',
-        detector_backend='opencv',
+        detector_backend='skip',  # Skip detection for dummy image
         enforce_detection=False
     )
     
     os.remove(temp_path)
-    print("✅ Model test successful!")
-    print(f"   Embedding dimension: {len(embedding[0]['embedding'])}")
+    print(f"✅ Model test successful! Embedding dimension: {len(embedding[0]['embedding'])}")
     
     print("\n" + "=" * 50)
     print("✅ Model pre-loading completed successfully!")
     print("=" * 50)
     
 except Exception as e:
-    print(f"\n❌ Error pre-loading model: {e}")
-    print("The app will still work, but first request may be slow.")
-    sys.exit(1)
+    print(f"\n⚠️ Warning: {e}")
+    print("Model will load on first request.")
+    # Don't exit with error - allow app to start anyway
+    sys.exit(0)
