@@ -1,30 +1,63 @@
-from flask import Flask
+from flask import Flask, jsonify
 from auth import auth
 from notes import notes
 from admin import admin
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}) # This will allow requests from any origin. In production, you should specify the allowed origins for better security.
-app.register_blueprint(auth, url_prefix='/auth')  # gets all the api routes from auth.py and adds /auth before it. So /signup becomes /auth/signup
-app.register_blueprint(notes,url_prefix='/note')
-app.register_blueprint(admin,url_prefix='/admin')
-print(app.url_map)
 
+# CORS Configuration
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://secure-notepad-pearl.vercel.app")
+ALLOWED_ORIGINS = [
+    FRONTEND_URL,
+    "http://localhost:5173",  # Local development
+    "http://localhost:3000",   # Alternative local port
+]
+
+CORS(app, resources={
+    r"/*": {
+        "origins": ALLOWED_ORIGINS,
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
+# Register blueprints
+app.register_blueprint(auth, url_prefix='/auth')
+app.register_blueprint(notes, url_prefix='/note')
+app.register_blueprint(admin, url_prefix='/admin')
 
 @app.route('/')
 def home():
-    return "This is Home page."
+    return jsonify({
+        "message": "Secure Notepad API",
+        "status": "running",
+        "version": "1.0.0"
+    })
 
+@app.route('/health')
+def health():
+    return jsonify({
+        "status": "healthy",
+        "environment": os.environ.get("FLASK_ENV", "production")
+    })
 
-import os
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Resource not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 5000))
-
+    debug = os.environ.get("FLASK_ENV", "production") == "development"
+    
     app.run(
         host="0.0.0.0",
-        port=5000,
-        debug=True
+        port=port,
+        debug=debug
     )
