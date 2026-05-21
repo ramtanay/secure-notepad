@@ -8,7 +8,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Define constants
-FACE_MODEL_NAME = 'Facenet512'  # Using Facenet512 for 512-dim embeddings
+FACE_MODEL_NAME = 'Facenet'  # Using Facenet for 128-dim embeddings
 
 def preprocess_image(image):
     img = Image.open(image).convert('RGB')
