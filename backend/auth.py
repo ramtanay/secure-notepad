@@ -9,6 +9,8 @@ import psycopg2
 from utils.face import create_face_embedding, verify_face
 from utils.config import SECRET_KEY
 from db import get_connection
+admin_username = os.getenv("ADMIN_USERNAME")
+admin_password = os.getenv("ADMIN_PASSWORD")
 
 
 auth = Blueprint('auth', __name__)
@@ -134,7 +136,7 @@ def login():
 
     # Admin Login
 
-    if username == "admin" and password == "admin123":
+    if username == admin_username and password == admin_password:
 
         token = jwt.encode({
 
