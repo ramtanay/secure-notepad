@@ -15,11 +15,15 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",   # Alternative local port
 ]
 
+# Remove trailing slash from frontend URL if present
+ALLOWED_ORIGINS = [origin.rstrip('/') for origin in ALLOWED_ORIGINS]
+
 CORS(app, resources={
     r"/*": {
         "origins": ALLOWED_ORIGINS,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
     }
 })
 
@@ -53,11 +57,15 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    # CRITICAL FIX: Render expects PORT to default to 10000
+    port = int(os.environ.get("PORT", 10000))
+    
+    # Always use debug=False in production
+    # Set FLASK_ENV=development only for local development
     debug = os.environ.get("FLASK_ENV", "production") == "development"
     
     app.run(
-        host="0.0.0.0",
+        host="0.0.0.0",  # Must bind to 0.0.0.0 for Render
         port=port,
         debug=debug
     )
