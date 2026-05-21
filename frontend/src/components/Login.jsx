@@ -25,34 +25,33 @@ export default function Login({ onLogin }) {
     baseURL: import.meta.env.VITE_API_URL,
   })
 
-  // Add request/response interceptors for debugging
-  API.interceptors.request.use(request => {
-    console.log("📤 Request:", {
-      url: request.url,
-      method: request.method,
-      data: request.data instanceof FormData ? "FormData" : request.data,
-      headers: request.headers
+  // Only add interceptors in development
+  if (import.meta.env.DEV) {
+    API.interceptors.request.use(request => {
+      console.log("📤 Request:", {
+        url: request.url,
+        method: request.method,
+        data: request.data instanceof FormData ? "FormData" : request.data,
+      })
+      return request
     })
-    return request
-  })
 
-  API.interceptors.response.use(
-    response => {
-      console.log("📥 Response:", {
-        status: response.status,
-        data: response.data
-      })
-      return response
-    },
-    error => {
-      console.error("❌ Response Error:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      })
-      return Promise.reject(error)
-    }
-  )
+    API.interceptors.response.use(
+      response => {
+        console.log("📥 Response:", {
+          status: response.status,
+        })
+        return response
+      },
+      error => {
+        console.error("❌ Response Error:", {
+          status: error.response?.status,
+          message: error.message
+        })
+        return Promise.reject(error)
+      }
+    )
+  }
 
   // =========================
   // SWITCH MODE WITH CLEANUP
@@ -168,12 +167,6 @@ export default function Login({ onLogin }) {
         return
       }
 
-      console.log("📷 Image selected:", {
-        name: file.name,
-        type: file.type,
-        size: `${(file.size / 1024).toFixed(2)} KB`
-      })
-
       setImage(file)
       setImagePreview(URL.createObjectURL(file))
       setMessage("")
@@ -207,10 +200,7 @@ export default function Login({ onLogin }) {
     setMessage("")
     setLoading(true)
 
-    console.log("🔐 Starting signup process...")
-
     if (!username || !password || !image) {
-      console.log("❌ Missing fields:", { username: !!username, password: !!password, image: !!image })
       setError("All fields are required")
       setLoading(false)
       return
@@ -234,23 +224,11 @@ export default function Login({ onLogin }) {
       formData.append("password", password)
       formData.append("image", image)
 
-      console.log("📤 Sending signup request to:", `${API.defaults.baseURL}/auth/signup`)
-      console.log("📦 FormData contents:")
-      for (let [key, value] of formData.entries()) {
-        if (key === 'image') {
-          console.log(`  ${key}: ${value.name} (${value.type}, ${value.size} bytes)`)
-        } else {
-          console.log(`  ${key}: ${value}`)
-        }
-      }
-
-      const response = await API.post("/auth/signup", formData, {
+      await API.post("/auth/signup", formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
       })
-
-      console.log("✅ Signup successful:", response.data)
 
       setMessage("Signup successful! Please login.")
       
@@ -259,7 +237,7 @@ export default function Login({ onLogin }) {
       }, 2000)
 
     } catch (err) {
-      console.error("❌ Signup error:", err)
+      console.error("Signup error:", err)
       
       let errorMessage = "Signup failed"
       if (err.response?.data?.message) {
@@ -287,8 +265,6 @@ export default function Login({ onLogin }) {
     setMessage("")
     setLoading(true)
 
-    console.log("🔐 Starting login process...")
-
     if (!username || !password) {
       setError("Username and password are required")
       setLoading(false)
@@ -300,18 +276,14 @@ export default function Login({ onLogin }) {
       formData.append("username", username)
       formData.append("password", password)
 
-      console.log("📤 Sending login request for user:", username)
-
       const response = await API.post("/auth/login", formData)
       const token = response.data.token
-
-      console.log("✅ Login successful")
 
       localStorage.setItem("token", token)
       onLogin(token)
       
     } catch (err) {
-      console.error("❌ Login error:", err)
+      console.error("Login error:", err)
       setError(err.response?.data?.message || "Login failed")
     } finally {
       setLoading(false)
@@ -329,8 +301,6 @@ export default function Login({ onLogin }) {
     setMessage("")
     setLoading(true)
 
-    console.log("😊 Starting face login process...")
-
     if (!username || !image) {
       setError("Username and image are required")
       setLoading(false)
@@ -342,18 +312,14 @@ export default function Login({ onLogin }) {
       formData.append("username", username)
       formData.append("image", image)
 
-      console.log("📤 Sending face login request for user:", username)
-
       const response = await API.post("/auth/face_login", formData)
       const token = response.data.token
-
-      console.log("✅ Face login successful")
 
       localStorage.setItem("token", token)
       onLogin(token)
 
     } catch (err) {
-      console.error("❌ Face login error:", err)
+      console.error("Face login error:", err)
       
       if (err.response?.status === 404) {
         setError("User not found. Please sign up first.")
@@ -469,9 +435,6 @@ export default function Login({ onLogin }) {
     </div>
   )
 
-  // Display current API URL for debugging
-  console.log("🌐 API Base URL:", API.defaults.baseURL)
-
   return (
     <div className="login-container">
       <div className="login-card">
@@ -480,13 +443,6 @@ export default function Login({ onLogin }) {
         <p className="subtitle">
           Smart Notes with Face Recognition
         </p>
-
-        {/* Debug info - remove in production */}
-        {import.meta.env.DEV && (
-          <div style={{ fontSize: "12px", color: "#666", marginBottom: "10px" }}>
-            API: {API.defaults.baseURL}
-          </div>
-        )}
 
         <div className="mode-switcher">
           <button
