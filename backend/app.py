@@ -9,6 +9,7 @@ CORS(app, origins=['https://secure-notepad-pearl.vercel.app']) # This will allow
 app.register_blueprint(auth, url_prefix='/auth')  # gets all the api routes from auth.py and adds /auth before it. So /signup becomes /auth/signup
 app.register_blueprint(notes,url_prefix='/note')
 app.register_blueprint(admin,url_prefix='/admin')
+print(app.url_map)
 
 
 @app.route('/')
