@@ -606,6 +606,11 @@ export default function Login({ onLogin }) {
 
             {renderImageSection("face-login-image")}
 
+              <div className="face-login-disclaimer">
+                ⚠️ Face login may take a few seconds depending on device performance. 
+                For faster access, we recommend using password login.
+              </div>
+
             <button
               type="submit"
               className="btn btn-primary"

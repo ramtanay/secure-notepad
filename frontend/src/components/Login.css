@@ -246,3 +246,14 @@
 .webcam-btn {
   margin-top: 10px;
 }
+
+.face-login-disclaimer {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  color: #f0c040;
+  line-height: 1.5;
+}

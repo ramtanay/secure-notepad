@@ -10,6 +10,13 @@ from utils.face import create_face_embedding, verify_face
 from utils.config import SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
 from db import get_connection
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMP_DIR = os.path.join(BASE_DIR, "temp")
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+
+os.makedirs(TEMP_DIR, exist_ok=True)
+
 
 
 auth = Blueprint('auth', __name__)
@@ -33,8 +40,7 @@ def signup():
         return jsonify({'message': 'Image is required.'}), 400
 
     temp_path = None
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
+    
     filename = image.filename.lower()
 
     if not filename.endswith(tuple(ALLOWED_EXTENSIONS)):
@@ -44,8 +50,8 @@ def signup():
     
     try:
         # Save temp image
-        os.makedirs("temp", exist_ok=True)
-        temp_path = f"temp/{username}_{image.filename}"
+        os.makedirs(TEMP_DIR, exist_ok=True)
+        temp_path = os.path.join(TEMP_DIR, f"{username}_{image.filename}")
         image.save(temp_path)
         
         # Create face embedding
@@ -78,6 +84,7 @@ def signup():
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+            print(f"🗑 Deleted temp file: {temp_path}")
 
 
 # =========================================
@@ -135,7 +142,6 @@ def face_login():
         return jsonify({'message': 'Image and username are required.'}), 400
 
     temp_path = None
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
     filename = image.filename.lower()
 
@@ -160,8 +166,8 @@ def face_login():
             return jsonify({'message': 'User not found.'}), 404
 
         # Save temp image
-        os.makedirs("temp", exist_ok=True)
-        temp_path = f"temp/face_login_{username}.jpg"
+        os.makedirs(TEMP_DIR, exist_ok=True)
+        temp_path = os.path.join(TEMP_DIR, f"face_login_{username}.jpg")
         image.save(temp_path)
         
         # Get stored embedding
@@ -200,6 +206,7 @@ def face_login():
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+            print(f"🗑 Deleted temp file: {temp_path}")
 
 
 # =========================================

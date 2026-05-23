@@ -11,10 +11,11 @@ app = Flask(__name__)
 from dotenv import load_dotenv
 load_dotenv()
 
-# ============================================
-# NO PRELOADING - Model loads on first request
-# This saves memory on free tier
-# ============================================
+from deepface import DeepFace
+
+print("Loading ArcFace model...")
+DeepFace.build_model("ArcFace")
+print("Model loaded!")
 
 # CORS Configuration
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://secure-notepad-pearl.vercel.app")
