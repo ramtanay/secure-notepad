@@ -1,51 +1,16 @@
 #!/bin/bash
+
 set -e
-set -o pipefail
 
 echo "=========================================="
-echo "Installing dependencies with pinned versions..."
+echo "Installing dependencies..."
 echo "=========================================="
 
 # Upgrade pip
 pip install --upgrade pip
 
-echo "📦 Installing numpy..."
-pip install numpy==1.23.5
-
-echo "📦 Installing pandas (required by deepface)..."
-pip install pandas==2.0.3
-
-echo "📦 Installing tensorflow 2.10.0 (lightweight version)..."
-pip install tensorflow==2.10.0
-
-echo "📦 Installing opencv..."
-pip install opencv-python-headless==4.7.0.72
-
-echo "📦 Installing deepface..."
-pip install --no-deps deepface==0.0.75
-
-# Install deepface dependencies manually
-echo "📦 Installing deepface dependencies..."
-pip install \
-    gdown==4.7.1 \
-    tqdm==4.65.0 \
-    fire==0.5.0 \
-    mtcnn==0.1.1 \
-    retina-face==0.0.17 \
-    beautifulsoup4==4.12.2 \
-    requests==2.31.0
-
-echo "📦 Installing Flask and web frameworks..."
-pip install Flask==2.3.3 Flask-Bcrypt==1.0.1 flask-cors==4.0.0
-
-echo "📦 Installing server and database packages..."
-pip install gunicorn==21.2.0 psycopg2-binary==2.9.9 PyJWT==2.8.0
-
-echo "📦 Installing utilities..."
-pip install python-dotenv==1.0.0 scikit-learn==1.2.2 scipy==1.10.1 pillow==9.5.0
-
-echo "📦 Pre-loading face recognition model..."
-python preload_model.py
+# Install all requirements
+pip install -r requirements.txt
 
 echo "=========================================="
 echo "✅ Setup complete!"
