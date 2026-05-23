@@ -3,46 +3,48 @@ from deepface import DeepFace
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 
-# Suppress TensorFlow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# Use Facenet (128-dim, same as face_recognition)
-FACE_MODEL_NAME = 'Facenet'
+SIMILARITY_THRESHOLD = 0.50
+
 
 def create_face_embedding(image_path):
-    """
-    Create face embedding using DeepFace with Facenet
-    Returns 128-dim embedding
-    """
+
     try:
-        embeddings = DeepFace.represent(
+
+        result = DeepFace.represent(
             img_path=image_path,
-            model_name=FACE_MODEL_NAME,
-            detector_backend='opencv',
-            enforce_detection=False
+            model_name="ArcFace",
+            detector_backend="mtcnn",
+            enforce_detection=True
         )
-        
-        if not embeddings or len(embeddings) == 0:
-            raise Exception("No face detected in the image")
-        
-        face_embedding = np.array(embeddings[0]['embedding'])
-        face_embedding = face_embedding / np.linalg.norm(face_embedding)
-        
-        return face_embedding
-        
+
+        embedding = result[0]["embedding"]
+
+        embedding = np.asarray(embedding, dtype=np.float32)
+
+        # Normalize embedding
+        embedding = embedding / np.linalg.norm(embedding)
+
+        return embedding
+
     except Exception as e:
-        print(f"Error creating embedding: {e}")
-        raise
+        print("❌ Face embedding error:", e)
+        raise Exception(f"Face processing failed: {str(e)}")
+
 
 def verify_face(embedding1, embedding2):
-    embedding1 = np.array(embedding1)
-    embedding2 = np.array(embedding2)
-    
-    if embedding1.shape != embedding2.shape:
-        print(f"⚠️ Dimension mismatch")
-        return False, 0.0
-    
-    similarity = cosine_similarity([embedding1], [embedding2])[0][0]
-    threshold = 0.55
-    
-    return similarity > threshold, similarity
+
+    embedding1 = np.asarray(embedding1, dtype=np.float32)
+    embedding2 = np.asarray(embedding2, dtype=np.float32)
+
+    similarity = cosine_similarity(
+        embedding1.reshape(1, -1),
+        embedding2.reshape(1, -1)
+    )[0][0]
+
+    similarity = float(similarity)
+
+    print(f"🔥 Similarity Score: {similarity:.4f}")
+
+    return similarity > SIMILARITY_THRESHOLD, similarity

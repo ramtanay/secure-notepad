@@ -1,40 +1,35 @@
-/* Toast.css - Enhanced Version */
+/* Toast.css - Clean version that doesn't block clicks */
 
-/* ============================================
-   Toast Container - Enhanced
-   ============================================ */
 .toast {
   position: fixed;
   top: 20px;
   right: 20px;
-  min-width: 320px;
+  min-width: 300px;
   max-width: 450px;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  animation: slideInRight 0.3s ease forwards;
   z-index: 10000;
   cursor: pointer;
+  pointer-events: auto;
 }
 
-/* Toast Variants with Gradients */
+/* Toast Variants */
 .toast-success {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border-left: 4px solid #10b981;
 }
 
 .toast-error {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  border-left: 4px solid #ef4444;
 }
 
 .toast-info {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
-  border-left: 4px solid #3b82f6;
 }
 
 /* Toast Content */
@@ -46,22 +41,24 @@
   font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.4;
-  position: relative;
 }
 
-/* Icon with Pulse Animation */
 .toast-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   flex-shrink: 0;
-  animation: pulse 0.5s ease;
+}
+
+.toast-message {
+  flex: 1;
+  word-break: break-word;
 }
 
 /* Progress Bar */
@@ -72,68 +69,87 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
   animation: progressBar 3s linear forwards;
   transform-origin: left;
 }
 
-/* Animations */
-@keyframes slideInRight {
-  0% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.toast-success::before {
+  background: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes slideOutRight {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
+.toast-error::before {
+  background: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes progressBar {
-  0% {
-    transform: scaleX(1);
-  }
-  100% {
-    transform: scaleX(0);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+.toast-info::before {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* Hover Effects */
 .toast:hover {
-  transform: translateX(-5px) scale(1.02);
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transform: translateX(-5px);
+  transition: transform 0.2s ease;
 }
 
 .toast:hover::before {
   animation-play-state: paused;
 }
 
-/* Responsive */
+/* Animations */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes progressBar {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Multiple Toasts Positioning */
+.toast:nth-child(1) {
+  top: 20px;
+}
+
+.toast:nth-child(2) {
+  top: 90px;
+}
+
+.toast:nth-child(3) {
+  top: 160px;
+}
+
+.toast:nth-child(4) {
+  top: 230px;
+}
+
+.toast:nth-child(5) {
+  top: 300px;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .toast {
     top: auto;
@@ -142,18 +158,56 @@
     left: 20px;
     min-width: auto;
     max-width: none;
-    animation: slideInUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation: slideInUp 0.3s ease forwards;
+  }
+  
+  .toast:nth-child(1) {
+    bottom: 20px;
+    top: auto;
+  }
+  
+  .toast:nth-child(2) {
+    bottom: 90px;
+    top: auto;
+  }
+  
+  .toast:nth-child(3) {
+    bottom: 160px;
+    top: auto;
+  }
+  
+  .toast:nth-child(4) {
+    bottom: 230px;
+    top: auto;
+  }
+  
+  .toast:nth-child(5) {
+    bottom: 300px;
+    top: auto;
   }
   
   @keyframes slideInUp {
-    0% {
+    from {
       opacity: 0;
       transform: translateY(100%);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .toast-content {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .toast-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
   }
 }
 
@@ -167,7 +221,7 @@
     animation: none;
   }
   
-  .toast-icon {
-    animation: none;
+  .toast:hover {
+    transform: none;
   }
 }

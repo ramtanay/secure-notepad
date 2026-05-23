@@ -134,7 +134,7 @@ export default function Notes({ token }) {
 
   const startEdit = (id, title, text) => {
     setEditingId(id)
-    setEditingTitle(title)
+    setEditingTitle(title || "")
     setEditingText(text)
   }
 
@@ -160,6 +160,7 @@ export default function Notes({ token }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && searchNotes()}
+            disabled={loading}
           />
           <button className="btn-search" onClick={searchNotes} disabled={loading}>
             🔍 Search
@@ -180,18 +181,21 @@ export default function Notes({ token }) {
           <button
             className={`filter-btn ${filterType === "all" ? "active" : ""}`}
             onClick={() => setFilterType("all")}
+            disabled={loading}
           >
             All
           </button>
           <button
             className={`filter-btn ${filterType === "long" ? "active" : ""}`}
             onClick={() => setFilterType("long")}
+            disabled={loading}
           >
             Long Notes
           </button>
           <button
             className={`filter-btn ${filterType === "short" ? "active" : ""}`}
             onClick={() => setFilterType("short")}
+            disabled={loading}
           >
             Short Notes
           </button>
@@ -236,12 +240,14 @@ export default function Notes({ token }) {
                     onChange={(e) => setEditingTitle(e.target.value)}
                     className="note-edit-title"
                     placeholder="Note title"
+                    disabled={loading}
                   />
                   <textarea
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     className="note-edit-textarea"
                     rows={4}
+                    disabled={loading}
                   />
                   <div className="note-actions">
                     <button

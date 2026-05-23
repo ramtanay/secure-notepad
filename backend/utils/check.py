@@ -33,8 +33,8 @@ def check_face():
     is_match, similarity = verify_face(embedding1, embedding2)
 
     return jsonify({
-    'match': bool(is_match),
-    'similarity': float(similarity)
+        'match': bool(is_match),
+        'similarity': round(float(similarity), 4)
     }), 200
 
 

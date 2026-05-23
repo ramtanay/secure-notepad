@@ -1,4 +1,4 @@
-/* Notes.css - Fixed Card Sizes */
+/* Notes.css - Brighter Version (No Blackish Tint) */
 
 /* ============================================
    CSS Variables
@@ -46,13 +46,20 @@
 }
 
 /* ============================================
-   Main Container
+   Main Container - FIXED: Brighter gradient
    ============================================ */
 .notes-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
   padding: 20px;
 }
+
+/* Alternative: Use solid light color instead of gradient */
+/* .notes-container {
+  min-height: 100vh;
+  background: #f0f4ff;
+  padding: 20px;
+} */
 
 /* ============================================
    Header Section
@@ -122,12 +129,18 @@
   font-size: 0.9rem;
   transition: var(--transition);
   min-width: 200px;
+  background: white;
+  color: var(--gray-800);
 }
 
 .search-section input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.search-section input::placeholder {
+  color: var(--gray-400);
 }
 
 .btn-search, .btn-reset {
@@ -212,12 +225,18 @@
   margin-bottom: 15px;
   transition: var(--transition);
   font-weight: 500;
+  background: white;
+  color: var(--gray-800);
 }
 
 .note-title-input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.note-title-input::placeholder {
+  color: var(--gray-400);
 }
 
 .add-note-form textarea {
@@ -230,12 +249,18 @@
   font-family: inherit;
   transition: var(--transition);
   margin-bottom: 15px;
+  background: white;
+  color: var(--gray-800);
 }
 
 .add-note-form textarea:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.add-note-form textarea::placeholder {
+  color: var(--gray-400);
 }
 
 .btn-add {
@@ -268,7 +293,7 @@
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 25px;
   animation: fadeIn 0.5s ease;
-  align-items: start; /* Prevents stretching */
+  align-items: start;
 }
 
 /* FIXED CARD SIZE - No more expanding! */
@@ -286,7 +311,7 @@
   /* FIXED HEIGHT - Cards will NOT expand */
   min-height: var(--card-min-height);
   max-height: var(--card-max-height);
-  height: auto; /* Allow height to be between min and max */
+  height: auto;
   
   /* Prevent content from overflowing */
   overflow-y: auto;
@@ -391,7 +416,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* Prevents shrinking */
+  flex-shrink: 0;
 }
 
 .note-meta small {
@@ -404,7 +429,7 @@
   display: flex;
   gap: 10px;
   margin-top: 10px;
-  flex-shrink: 0; /* Prevents shrinking */
+  flex-shrink: 0;
 }
 
 /* Edit mode styles */
@@ -418,6 +443,8 @@
   margin-bottom: 10px;
   font-family: inherit;
   flex-shrink: 0;
+  background: white;
+  color: var(--gray-800);
 }
 
 .note-edit-title:focus {
@@ -435,6 +462,8 @@
   resize: vertical;
   font-family: inherit;
   margin-bottom: 15px;
+  background: white;
+  color: var(--gray-800);
   
   /* FIXED EDIT TEXTAREA SIZE */
   max-height: 150px;
@@ -525,6 +554,25 @@
 .empty-state small {
   color: var(--gray-400);
   font-size: 0.9rem;
+}
+
+/* Alert messages */
+.alert {
+  padding: 15px 20px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid var(--danger);
+}
+
+.alert-success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid var(--success);
 }
 
 /* Animations */
@@ -674,4 +722,41 @@
     max-height: none;
     overflow: visible;
   }
+}
+
+
+
+
+/* Force fix for any invisible overlays */
+.loading-overlay,
+.modal-overlay,
+.toast-overlay {
+  display: none !important;
+}
+
+/* Ensure all clickable elements are actually clickable */
+button, 
+.btn-search, 
+.btn-reset, 
+.filter-btn, 
+.btn-add, 
+.btn-edit, 
+.btn-delete, 
+.btn-save, 
+.btn-cancel {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+/* Ensure the container doesn't block clicks */
+.notes-container {
+  pointer-events: auto !important;
+}
+
+/* Fix for any potential stuck loading state */
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
 }
