@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import os
+import traceback
+
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -30,6 +32,7 @@ def create_face_embedding(image_path):
 
     except Exception as e:
         print("❌ Face embedding error:", e)
+        traceback.print_exc()
         raise Exception(f"Face processing failed: {str(e)}")
 
 
