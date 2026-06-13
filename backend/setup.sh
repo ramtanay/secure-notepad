@@ -6,29 +6,21 @@ echo "=========================================="
 echo "Installing dependencies..."
 echo "=========================================="
 
-# Upgrade pip
 pip install --upgrade pip
 
-# Install requirements
 pip install -r requirements.txt
 
-echo "=========================================="
-echo "Installing DeepFace (without dependencies)..."
-echo "=========================================="
+# Remove GUI OpenCV if DeepFace installed it
+pip uninstall -y opencv-python || true
 
-pip install deepface==0.0.95 --no-deps
+# Force headless OpenCV
+pip install --force-reinstall opencv-python-headless==4.10.0.84
 
 echo "=========================================="
 echo "Installed OpenCV packages:"
 echo "=========================================="
 
 pip freeze | grep opencv || true
-
-echo "=========================================="
-echo "Installed DeepFace package:"
-echo "=========================================="
-
-pip freeze | grep deepface || true
 
 echo "=========================================="
 echo "✅ Setup complete!"
