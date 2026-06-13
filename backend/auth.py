@@ -5,6 +5,8 @@ import jwt
 import numpy as np
 import os
 import psycopg2
+import traceback
+
 
 from utils.face import create_face_embedding, verify_face
 from utils.config import SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
@@ -78,8 +80,15 @@ def signup():
         return jsonify({"message": "Username already exists."}), 400
         
     except Exception as e:
-        print(f"Signup error: {e}")
-        return jsonify({'message': 'Face processing failed.', 'error': str(e)}), 400
+        print("\n========== SIGNUP ERROR ==========")
+        print("ERROR:", str(e))
+        traceback.print_exc()
+        print("==================================\n")
+
+        return jsonify({
+            'message': str(e),
+            'error': str(e)
+            }), 400
         
     finally:
         if temp_path and os.path.exists(temp_path):
