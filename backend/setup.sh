@@ -10,17 +10,16 @@ pip install --upgrade pip
 
 pip install -r requirements.txt
 
-# Remove GUI OpenCV if DeepFace installed it
+# Remove GUI OpenCV only if it exists
 pip uninstall -y opencv-python || true
 
-# Force headless OpenCV
-pip install --force-reinstall opencv-python-headless==4.10.0.84
-
 echo "=========================================="
-echo "Installed OpenCV packages:"
+echo "Installed versions"
 echo "=========================================="
 
 pip freeze | grep opencv || true
+pip freeze | grep numpy || true
+pip freeze | grep pandas || true
 
 echo "=========================================="
 echo "✅ Setup complete!"
