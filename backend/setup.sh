@@ -10,16 +10,11 @@ pip install --upgrade pip
 
 pip install -r requirements.txt
 
-# Remove GUI OpenCV only if it exists
-pip uninstall -y opencv-python || true
-
 echo "=========================================="
-echo "Installed versions"
+echo "Verifying OpenCV..."
 echo "=========================================="
 
-pip freeze | grep opencv || true
-pip freeze | grep numpy || true
-pip freeze | grep pandas || true
+python -c "import cv2; print('OpenCV:', cv2.__version__)"
 
 echo "=========================================="
 echo "✅ Setup complete!"
