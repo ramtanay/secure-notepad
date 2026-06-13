@@ -1,7 +1,7 @@
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 import os
 import traceback
+
 
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -40,13 +40,26 @@ def verify_face(embedding1, embedding2):
     embedding1 = np.asarray(embedding1, dtype=np.float32)
     embedding2 = np.asarray(embedding2, dtype=np.float32)
 
-    similarity = cosine_similarity(
-        embedding1.reshape(1, -1),
-        embedding2.reshape(1, -1)
-    )[0][0]
+    similarity = cosine_similarity_np(
+        embedding1,
+        embedding2
+    )
 
     similarity = float(similarity)
 
     print(f"🔥 Similarity Score: {similarity:.4f}")
 
     return similarity > SIMILARITY_THRESHOLD, similarity
+
+
+
+def cosine_similarity_np(a, b):
+    a = np.asarray(a, dtype=np.float32).flatten()
+    b = np.asarray(b, dtype=np.float32).flatten()
+
+    denominator = np.linalg.norm(a) * np.linalg.norm(b)
+
+    if denominator == 0:
+        return 0.0
+
+    return np.dot(a, b) / denominator
