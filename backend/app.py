@@ -52,12 +52,7 @@ def home():
 @app.route("/health")
 def health():
     return jsonify({
-        "status": "healthy",
-        "environment": os.environ.get(
-            "FLASK_ENV",
-            "production"
-        ),
-        "port": os.environ.get("PORT", "10000")
+        "status": "healthy"
     })
 
 
