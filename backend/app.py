@@ -53,7 +53,7 @@ def home():
 def health():
     return jsonify({
         "status": "healthy"
-    })
+    }), 200
 
 
 @app.errorhandler(404)
